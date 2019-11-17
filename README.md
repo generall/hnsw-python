@@ -15,7 +15,8 @@ HNSW implemented by python.
 import time
 from progressbar import *
 import pickle
-from hnsw import HNSW
+from random_example import HNSW
+import numpy as np
 
 dim = 200
 num_elements = 10000

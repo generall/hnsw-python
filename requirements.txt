@@ -1,0 +1,4 @@
+progressbar
+numpy
+pytest
+nmslib

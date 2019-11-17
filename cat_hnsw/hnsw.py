@@ -23,13 +23,11 @@ class HNSW(object):
         except ValueError:
             print(a)
             print(b)
-        
 
     def _distance(self, x, y):
         return self.distance_func(x, [y])[0]
 
     def vectorized_distance_(self, x, ys):
-        pprint.pprint([self.distance_func(x, y) for y in ys])
         return [self.distance_func(x, y) for y in ys]
 
     def __init__(self, distance_type, m=5, ef=200, m0=None, heuristic=True, vectorized=False):
@@ -46,10 +44,17 @@ class HNSW(object):
         self.distance_func = distance_func
 
         if vectorized:
+            # def distance_1(x, y):
+            #     return distance_func(x, [y])[0]
+
             self.distance = self._distance
             self.vectorized_distance = distance_func
         else:
             self.distance = distance_func
+
+            # def vectorized_distance(x, ys):
+            # return [distance_func(x, y) for y in ys]
+
             self.vectorized_distance = self.vectorized_distance_
 
         self._m = m
@@ -89,7 +94,6 @@ class HNSW(object):
                 point, dist = self._search_graph_ef1(elem, point, dist, layer)
             # at these levels we have to insert elem; ep is a heap of entry points.
             ep = [(-dist, point)]
-            # pprint.pprint(ep)
             layer0 = graphs[0]
             for layer in reversed(graphs[:level]):
                 level_m = m if layer is not layer0 else self._m0
@@ -153,7 +157,6 @@ class HNSW(object):
         self._enter_point = idx
 
     def search(self, q, k=None, ef=None):
-        """Find the k points closest to q."""
 
         distance = self.distance
         graphs = self._graphs
@@ -180,7 +183,6 @@ class HNSW(object):
         return [(idx, -md) for md, idx in ep]
 
     def _search_graph_ef1(self, q, entry, dist, layer):
-        """Equivalent to _search_graph when ef=1."""
 
         vectorized_distance = self.vectorized_distance
         data = self.data
@@ -220,7 +222,7 @@ class HNSW(object):
             mref = ep[0][0]
             if dist > -mref:
                 break
-            # pprint.pprint(layer[c])
+
             edges = [e for e in layer[c] if e not in visited]
             visited.update(edges)
             dists = vectorized_distance(q, [data[e] for e in edges])
@@ -239,7 +241,7 @@ class HNSW(object):
 
     def _select_naive(self, d, to_insert, m, layer, heap=False):
 
-        if not heap:
+        if not heap:  # shortcut when we've got only one thing to insert
             idx, dist = to_insert
             assert idx not in d
             if len(d) < m:
@@ -251,6 +253,7 @@ class HNSW(object):
                     d[idx] = dist
             return
 
+        # so we have more than one item to insert, it's a bit more tricky
         assert not any(idx in d for _, idx in to_insert)
         to_insert = nlargest(m, to_insert)  # smallest m distances
         unchecked = m - len(d)
@@ -315,75 +318,3 @@ class HNSW(object):
             except KeyError:
                 return
 
-
-if __name__ == "__main__":
-    dim = 25
-    num_elements = 1000
-
-    import h5py
-    import time
-    from progressbar import *
-    import pickle
-
-    f = h5py.File('glove-25-angular.hdf5','r')
-    distances = f['distances']
-    neighbors = f['neighbors']
-    test = f['test']
-    train = f['train']
-    pprint.pprint(list(f.keys()))
-    pprint.pprint(train.shape)
-    # pprint.pprint()
-
-    # Generating sample data
-    data = np.array(np.float32(np.random.random((num_elements, dim))))
-    data_labels = np.arange(num_elements)
-
-    
-    hnsw = HNSW('cosine', m0=5, ef=10)
-    
-
-    # widgets = ['Progress: ',Percentage(), ' ', Bar('#'),' ', Timer(),
-    #     ' ', ETA()]
-    # pbar = ProgressBar(widgets=widgets, maxval=train.shape[0]).start()
-    # for i in range(train.shape[0]):
-    #     # if i == 1000:
-    #     #     break
-    #     hnsw.balanced_add(train[i])
-    #     pbar.update(i + 1)
-    # pbar.finish()
-
-    for index, i in enumerate(data):
-        if index % 1000 == 0:
-            pprint.pprint('train No.%d' % index)
-        # hnsw.balanced_add(i)
-        hnsw.add(i)
-
-    # with open('glove-25-angular-balanced-128.ind', 'wb') as f:
-    #     picklestring = pickle.dump(hnsw, f, pickle.HIGHEST_PROTOCOL)
-
-    # add_point_time = time.time()
-    # idx = hnsw.search(np.float32(np.random.random((1, 25))), 1)
-    # search_time = time.time()
-    # pprint.pprint(idx)
-    # pprint.pprint("add point time: %f" % (add_point_time - time_start))
-    # pprint.pprint("searchtime: %f" % (search_time - add_point_time))
-    # print('\n')
-    # # pprint.pprint(hnsw._graphs)
-    # for n in hnsw._graphs:
-    #     pprint.pprint(len(n))
-    # pprint.pprint(len(hnsw._graphs))
-    # print(hnsw.data)
-
-# for index, i in enumerate(data):
-#     idx = hnsw.search(i, 1)
-#     pprint.pprint(idx[0][0])
-#     pprint.pprint(i)
-#     pprint.pprint(hnsw.data[idx[0][0]])
-
-# pprint.pprint('------------------------------')
-# pprint.pprint(hnsw.data)
-# pprint.pprint('------------------------------')
-# pprint.pprint(data)
-# pprint.pprint('------------------------------')
-# pprint.pprint(hnsw._graphs)
-# pprint.pprint(len(hnsw._graphs))

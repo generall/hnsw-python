@@ -8,6 +8,7 @@ from operator import itemgetter
 from random import random
 
 import numpy as np
+from tqdm import tqdm
 
 
 class HNSW(object):
@@ -67,7 +68,12 @@ class HNSW(object):
         self._select = (
             self._select_heuristic if heuristic else self._select_naive)
 
-    def add(self, elem, ef=None):
+    def add_batch(self, data: np.ndarray, ef=None):
+        self.data = data
+        for i in tqdm(range(self.data.shape[0])):
+            self._add(i, ef=ef)
+
+    def _add(self, idx, ef=None):
 
         if ef is None:
             ef = self._ef
@@ -80,11 +86,8 @@ class HNSW(object):
 
         # level at which the element will be inserted
         level = int(-log2(random()) * self._level_mult) + 1
-        # print("level: %d" % level)
 
-        # elem will be at data[idx]
-        idx = len(data)
-        data.append(elem)
+        elem = data[idx]
 
         if point is not None:  # the HNSW is not empty, we have an entry point
             dist = distance(elem, data[point])

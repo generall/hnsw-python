@@ -114,48 +114,6 @@ class HNSW(object):
             graphs.append({idx: {}})
             self._enter_point = idx
 
-    def balanced_add(self, elem, ef=None):
-        if ef is None:
-            ef = self._ef
-
-        distance = self.distance
-        data = self.data
-        graphs = self._graphs
-        point = self._enter_point
-        m = self._m
-        m0 = self._m0
-
-        idx = len(data)
-        data.append(elem)
-
-        if point is not None:
-            dist = distance(elem, data[point])
-            pd = [(point, dist)]
-            # pprint.pprint(len(graphs))
-            for layer in reversed(graphs[1:]):
-                point, dist = self._search_graph_ef1(elem, point, dist, layer)
-                pd.append((point, dist))
-            for level, layer in enumerate(graphs):
-                # print('\n')
-                # pprint.pprint(layer)
-                level_m = m0 if level == 0 else m
-                candidates = self._search_graph(
-                    elem, [(-dist, point)], layer, ef)
-                layer[idx] = layer_idx = {}
-                self._select(layer_idx, candidates, level_m, layer, heap=True)
-                # add reverse edges
-                for j, dist in layer_idx.items():
-                    self._select(layer[j], [idx, dist], level_m, layer)
-                    assert len(layer[j]) <= level_m
-                if len(layer_idx) < level_m:
-                    return
-                if level < len(graphs) - 1:
-                    if any(p in graphs[level + 1] for p in layer_idx): 
-                        return
-                point, dist = pd.pop()
-        graphs.append({idx: {}})
-        self._enter_point = idx
-
     def search(self, q, k=None, ef=None):
 
         distance = self.distance
@@ -190,7 +148,7 @@ class HNSW(object):
         best = entry
         best_dist = dist
         candidates = [(dist, entry)]
-        visited = set([entry])
+        visited = {entry}
 
         while candidates:
             dist, c = heappop(candidates)
@@ -239,7 +197,16 @@ class HNSW(object):
 
         return ep
 
-    def _select_naive(self, d, to_insert, m, layer, heap=False):
+    def _select_naive(self, d: dict, to_insert, m, layer, heap=False):
+        """
+
+        :param d: adjacency list
+        :param to_insert: candidates for inserting
+        :param m: max number to insert
+        :param layer: All adjacency lists
+        :param heap:
+        :return:
+        """
 
         if not heap:  # shortcut when we've got only one thing to insert
             idx, dist = to_insert

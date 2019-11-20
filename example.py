@@ -21,7 +21,7 @@ def run_build(path_to_save='random.ind'):
 
     # save index
     with open(path_to_save, 'wb') as f:
-        picklestring = pickle.dump(hnsw, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(hnsw, f, pickle.HIGHEST_PROTOCOL)
 
 
 def run_search(path_to_index='random.ind'):

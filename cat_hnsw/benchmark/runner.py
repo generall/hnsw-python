@@ -22,7 +22,7 @@ def calc_precision_at(found_pos: List[int], limit):
     return np.mean(hits), proportion_confint(sum(hits), len(found_pos))
 
 
-class BaseRunner:
+class BaseExperiment:
     """
     Class for running benchmarks
     """
@@ -30,35 +30,38 @@ class BaseRunner:
     def __init__(
             self,
             experiment_name,
-            param,
             m0=16,
             ef=128,
             dim=50,
             num_elements=10000
     ):
-        self.param = param
-        self.experiment_name = experiment_name
         self.num_elements = num_elements
         self.dim = dim
         self.ef = ef
         self.m0 = m0
+        self.experiment_name = experiment_name
 
         self.experiment_dir = os.path.join(DATA_PATH, 'experiments', f'exp_{self.experiment_name}')
         os.mkdir(self.experiment_dir)
 
-        self.index_path = os.path.join(self.experiment_dir, 'index.idn')
+        self.index_path = os.path.join(self.experiment_dir, 'index.idx')
 
-    def run_build(self):
-        path_to_save = os.path.join(self.experiment_dir, 'index.idn')
+    def generate_data(self, param):
+        return np.random.rand(self.num_elements, self.dim)
 
-        data = np.random.rand(self.num_elements, self.dim)
+    def generate_index_calss(self, param):
+        return HNSW('cosine', m0=self.m0, ef=self.ef)
 
-        hnsw = HNSW('cosine', m0=self.m0, ef=self.ef)
-        hnsw.add_batch(data)
+    def run_build(self,
+                  param,
+                  ):
+        data = self.generate_data(param)
+        index = self.generate_index_calss(param)
+        index.add_batch(data)
 
         # save index
         with open(self.index_path, 'wb') as f:
-            pickle.dump(hnsw, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(index, f, pickle.HIGHEST_PROTOCOL)
 
     def get_random_vector(self):
         return np.float32(np.random.random((1, self.dim)))
@@ -89,10 +92,10 @@ class BaseRunner:
 
         return found_top
 
-    def save_metrics(self, fd, found_top, param):
+    def save_metrics(self, fd, found_top, experiment_param, variable_param):
         fd.write(json.dumps({
-            'm0': self.m0,
-            'param': param,
+            'experiment_param': experiment_param,
+            'variable_param': variable_param,
             'precision@10': calc_precision_at(found_top, 10),
         }))
         fd.write('\n')
@@ -104,16 +107,16 @@ class BaseRunner:
 
         return hnsw_n
 
-    def get_mask(self, index, param):
+    def get_mask(self, index, experiment_param, variable_param):
         all_mask = np.ones(index.data.shape[0], dtype=bool)
         return all_mask
 
-    def run(self, iteration_name, param_vals: list, attempts_per_value=100):
-        self.run_build()
+    def run_accuracy_test(self, iteration_name, experiment_param, variable_params: list, attempts_per_value=100):
+        self.run_build(experiment_param)
         index = self.load_index()
 
         with open(os.path.join(self.experiment_dir, iteration_name + '.jsonl')) as logs_out:
-            for param_val in param_vals:
-                mask = self.get_mask(index, param_val)
+            for variable_param in variable_params:
+                mask = self.get_mask(index, experiment_param, variable_param)
                 found_top = self.test_accuracy(index.data, mask=mask, index=index, attempts=attempts_per_value)
-                self.save_metrics(logs_out, found_top, param_val)
+                self.save_metrics(logs_out, found_top, experiment_param, variable_param)

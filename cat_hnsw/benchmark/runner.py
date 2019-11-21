@@ -42,7 +42,8 @@ class BaseExperiment:
         self.experiment_name = experiment_name
 
         self.experiment_dir = os.path.join(DATA_PATH, 'experiments', f'exp_{self.experiment_name}')
-        os.mkdir(self.experiment_dir)
+
+        os.makedirs(self.experiment_dir, exist_ok=True)
 
         self.index_path = os.path.join(self.experiment_dir, 'index.idx')
 
@@ -115,7 +116,7 @@ class BaseExperiment:
         self.run_build(experiment_param)
         index = self.load_index()
 
-        with open(os.path.join(self.experiment_dir, iteration_name + '.jsonl')) as logs_out:
+        with open(os.path.join(self.experiment_dir, iteration_name + '.jsonl'), 'w') as logs_out:
             for variable_param in variable_params:
                 mask = self.get_mask(index, experiment_param, variable_param)
                 found_top = self.test_accuracy(index.data, mask=mask, index=index, attempts=attempts_per_value)

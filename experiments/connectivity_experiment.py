@@ -13,7 +13,7 @@ class ConnectivityExperiment(BaseExperiment):
     def __init__(self, experiment_name):
         super().__init__(experiment_name, num_elements=10000)
 
-    def generate_index_calss(self, param):
+    def generate_index_class(self, param):
         return HNSW('cosine', m0=param, ef=self.ef)
 
     def load_index(self):

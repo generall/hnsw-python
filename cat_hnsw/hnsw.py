@@ -103,7 +103,6 @@ class HNSW(object):
 
         elem = data[idx]
         # elem will be at data[idx]
-        idx = len(data)
 
         if point is not None:  # the HNSW is not empty, we have an entry point
             dist = distance(elem, data[point])

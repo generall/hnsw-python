@@ -50,14 +50,14 @@ class BaseExperiment:
     def generate_data(self, param):
         return np.random.rand(self.num_elements, self.dim)
 
-    def generate_index_calss(self, param):
+    def generate_index_class(self, param):
         return HNSW('cosine', m0=self.m0, ef=self.ef)
 
     def run_build(self,
                   param,
                   ):
         data = self.generate_data(param)
-        index = self.generate_index_calss(param)
+        index = self.generate_index_class(param)
         index.add_batch(data)
 
         # save index

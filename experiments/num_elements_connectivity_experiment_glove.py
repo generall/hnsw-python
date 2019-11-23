@@ -19,7 +19,7 @@ class ConnectivityGloveNumElementsExperiment(ConnectivityNumElementsExperiment):
 
 
 if __name__ == "__main__":
-    experiment = ConnectivityNumElementsExperiment(
+    experiment = ConnectivityGloveNumElementsExperiment(
         "connectivity_glove_num_elements",
     )
 

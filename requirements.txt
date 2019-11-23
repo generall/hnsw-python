@@ -3,3 +3,4 @@ numpy
 pytest
 nmslib
 tqdm
+gensim

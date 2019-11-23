@@ -2,3 +2,4 @@ statsmodels
 numpy
 pytest
 nmslib
+tqdm

@@ -20,7 +20,7 @@ class HNSW(object):
 
     def cosine_distance(self, a, b):
         try:
-            return np.dot(a, b)/(np.linalg.norm(a)*(np.linalg.norm(b)))
+            return np.dot(a, b) / (np.linalg.norm(a) * (np.linalg.norm(b)))
         except ValueError:
             print(a)
             print(b)
@@ -71,23 +71,39 @@ class HNSW(object):
     def add_batch(self, data: np.ndarray, ef=None):
         self.data = data
         for i in tqdm(range(self.data.shape[0])):
-            self._add(i, ef=ef)
+            self._enter_point = self._add(
+                i,
+                data=self.data,
+                graphs=self._graphs,
+                entry_point=self._enter_point,
+                m=self._m,
+                m0=self._m0,
+                ef=ef
+            )
 
-    def _add(self, idx, ef=None):
+    def _add(
+            self,
+            idx,
+            data,
+            graphs,
+            entry_point,
+            m,
+            m0,
+            ef=None
+    ):
 
         if ef is None:
             ef = self._ef
-
         distance = self.distance
-        data = self.data
-        graphs = self._graphs
-        point = self._enter_point
-        m = self._m
+        point = entry_point
 
         # level at which the element will be inserted
         level = int(-log2(random()) * self._level_mult) + 1
+        # print("level: %d" % level)
 
         elem = data[idx]
+        # elem will be at data[idx]
+        idx = len(data)
 
         if point is not None:  # the HNSW is not empty, we have an entry point
             dist = distance(elem, data[point])
@@ -99,7 +115,7 @@ class HNSW(object):
             ep = [(-dist, point)]
             layer0 = graphs[0]
             for layer in reversed(graphs[:level]):
-                level_m = m if layer is not layer0 else self._m0
+                level_m = m if layer is not layer0 else m0
                 # navigate the graph and update ep with the closest
                 # nodes we find
                 ep = self._search_graph(elem, ep, layer, ef)
@@ -115,7 +131,9 @@ class HNSW(object):
         for i in range(len(graphs), level):
             # for all new levels, we create an empty graph
             graphs.append({idx: {}})
-            self._enter_point = idx
+            entry_point = idx
+
+        return entry_point
 
     def search(self, q, k=None, ef=None):
 
@@ -200,7 +218,8 @@ class HNSW(object):
 
         return ep
 
-    def _select_naive(self, d: dict, to_insert, m, layer, heap=False):
+    @classmethod
+    def _select_naive(cls, d: dict, to_insert, m, layer, heap=False):
         """
 
         :param d: adjacency list
@@ -244,7 +263,8 @@ class HNSW(object):
             d[idx_new] = -md_new
             assert len(d) == m
 
-    def _select_heuristic(self, d, to_insert, m, g, heap=False):
+    @classmethod
+    def _select_heuristic(cls, d, to_insert, m, g, heap=False):
 
         nb_dicts = [g[idx] for idx in d]
 
@@ -287,4 +307,3 @@ class HNSW(object):
                 yield from g[idx].items()
             except KeyError:
                 return
-

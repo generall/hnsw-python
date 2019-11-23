@@ -15,14 +15,10 @@ class HNSWCat(HNSW):
     Category-aware HNSW index
     """
 
-    def __init__(self, distance_type, m=5, ef=200, cat_ef=50, m0=None, heuristic=True, vectorized=False):
+    def __init__(self, distance_type, m=5, ef=200, m0=None, heuristic=True, vectorized=False):
         super().__init__(distance_type, m, ef, m0, heuristic, vectorized)
 
-        self._cat_ef = cat_ef
-        self._category_enter_points = {}
-        self.categories = []
-
-    def init_from_existing(self, other: HNSW, categories):
+    def init_from_existing(self, other: HNSW):
         self.distance_func = other.distance_func
         self.vectorized_distance = other.vectorized_distance
         self.data = other.data
@@ -33,7 +29,6 @@ class HNSWCat(HNSW):
         self._graphs = other._graphs
         self._enter_point = other._enter_point
         self._select = other._select
-        self.categories = categories or defaultdict(int)
 
         return self
 

@@ -1,5 +1,9 @@
-from math import log2
-from random import random
+from itertools import groupby
+from operator import itemgetter
+from typing import Dict, Any
+
+import numpy as np
+from tqdm import tqdm
 
 from cat_hnsw.hnsw_cat import HNSWCat
 
@@ -9,53 +13,61 @@ class HNSWConsistentBuild(HNSWCat):
     Preserve in-category connectivity.
     """
 
-    def add(self, elem, category=None, ef=None):
+    def __init__(self, distance_type, m=5, cat_m=5, ef=200, m0=None, heuristic=True, vectorized=False):
+        super().__init__(distance_type, m, ef, m0, heuristic, vectorized)
+        self._cat_m = cat_m
+        self._cat_m0 = cat_m * 2
+        self._category_enter_points = {}
 
-        if ef is None:
-            ef = self._ef
+    @classmethod
+    def _merge_layers(cls, layer_to, layer_from):
+        for node, edges in layer_from:
+            if node not in layer_to:
+                layer_to[node] = edges
+            else:
+                layer_to[node].update(edges)
 
-        distance = self.distance
-        data = self.data
-        graphs = self._graphs
-        category_point = self._category_enter_points.get(category)
-        point = self._enter_point
+    def _merge_graphs(self, graphs: list):
+        for layer_idx, layer in enumerate(graphs):
+            if layer_idx == len(self._graphs):
+                self._graphs.append(layer)
+            else:
+                self._merge_layers(self._graphs[layer_idx], layer)
 
-        m = self._m
+    def add_batch(self, data: np.ndarray, categories: Dict[int, Any] = None, ef=None):
+        self.data = data
+        for i in tqdm(range(self.data.shape[0])):
+            self._enter_point = self._add(
+                i,
+                data=self.data,
+                graphs=self._graphs,
+                entry_point=self._enter_point,
+                m=self._m,
+                m0=self._m0,
+                ef=ef
+            )
 
-        # level at which the element will be inserted
-        level = int(-log2(random()) * self._level_mult) + 1
-        # print("level: %d" % level)
+        if categories:
+            categories = groupby(sorted(categories.items(), key=itemgetter(1)), key=itemgetter(1))
+            for category, points in tqdm(categories):
 
-        # elem will be at data[idx]
-        idx = len(data)
-        data.append(elem)
+                graphs = []
+                entry_point = None
+                m = self._cat_m
+                m0 = self._cat_m0
+                for idx in points:
+                    entry_point = self._add(
+                        idx,
+                        data=self.data,
+                        graphs=graphs,
+                        entry_point=entry_point,
+                        m=m,
+                        m0=m0,
+                        ef=ef
+                    )
 
-        self.categories.append(category)
+                self._category_enter_points[category] = (entry_point, len(graphs) - 1)
+                if len(graphs) > len(self._graphs):
+                    self._enter_point = entry_point
 
-        if point is not None:  # the HNSW is not empty, we have an entry point
-            dist = distance(elem, data[point])
-            # for all levels in which we dont have to insert elem,
-            # we search for the closest neighbor
-            for layer in reversed(graphs[level:]):
-                point, dist = self._search_graph_ef1(elem, point, dist, layer)
-            # at these levels we have to insert elem; ep is a heap of entry points.
-            ep = [(-dist, point)]
-            layer0 = graphs[0]
-            for layer in reversed(graphs[:level]):
-                level_m = m if layer is not layer0 else self._m0
-                # navigate the graph and update ep with the closest
-                # nodes we find
-                ep = self._search_graph(elem, ep, layer, ef)
-                # insert in g[idx] the best neighbors
-                layer[idx] = layer_idx = {}
-                self._select(layer_idx, ep, level_m, layer, heap=True)
-                # assert len(layer_idx) <= level_m
-                # insert backlinks to the new node
-                for j, dist in layer_idx.items():
-                    self._select(layer[j], (idx, dist), level_m, layer)
-                    # assert len(g[j]) <= level_m
-                # assert all(e in g for _, e in ep)
-        for i in range(len(graphs), level):
-            # for all new levels, we create an empty graph
-            graphs.append({idx: {}})
-            self._enter_point = idx
+                self._merge_graphs(graphs)

@@ -38,20 +38,20 @@ if __name__ == "__main__":
     experiment.run_accuracy_test(
         'num_10k',
         experiment_param=10_000,
-        variable_params=list(range(1, 50)),
+        variable_params=list(range(30, 99)),
         attempts_per_value=100
     )
 
     experiment.run_accuracy_test(
         'num_20k',
         experiment_param=20_000,
-        variable_params=list(range(1, 50)),
+        variable_params=list(range(30, 99)),
         attempts_per_value=100
     )
 
     experiment.run_accuracy_test(
         'num_30k',
         experiment_param=30_000,
-        variable_params=list(range(1, 50)),
+        variable_params=list(range(30, 99)),
         attempts_per_value=100
     )

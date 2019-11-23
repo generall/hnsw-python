@@ -13,10 +13,8 @@ class HNSWConsistentBuild(HNSWCat):
     Preserve in-category connectivity.
     """
 
-    def __init__(self, distance_type, m=5, cat_m=5, ef=200, m0=None, heuristic=True, vectorized=False):
+    def __init__(self, distance_type, m=5, ef=200, m0=None, heuristic=True, vectorized=False):
         super().__init__(distance_type, m, ef, m0, heuristic, vectorized)
-        self._cat_m = cat_m
-        self._cat_m0 = cat_m * 2
         self._category_enter_points = {}
 
     @classmethod
@@ -57,6 +55,10 @@ class HNSWConsistentBuild(HNSWCat):
             data: np.ndarray,
             categories: Dict[Any, Iterable[int]] = None,
             connected_subsets: Iterable[Iterable[int]] = None,
+            cat_m=None,
+            cat_m0=None,
+            subset_m=None,
+            subset_m0=None,
             ef=None
     ):
         self.data = data
@@ -71,10 +73,20 @@ class HNSWConsistentBuild(HNSWCat):
                 ef=ef
             )
 
-        if categories:
+        if categories is not None:
+            cat_m = cat_m or self._m
+            cat_m0 = cat_m0 or self._m0
+
             for category, points in tqdm(categories):
-                graphs, entry_point = self.build_cat_subgraph(points, m=self._cat_m, m0=self._cat_m0, ef=ef)
+                graphs, entry_point = self.build_cat_subgraph(points, m=cat_m, m0=cat_m0, ef=ef)
 
                 self._category_enter_points[category] = (entry_point, len(graphs) - 1)
                 if len(graphs) > len(self._graphs):
                     self._enter_point = entry_point
+
+        if connected_subsets is not None:
+            subset_m = subset_m or self._m
+            subset_m0 = subset_m0 or self._m0
+
+            for subset in connected_subsets:
+                graphs, entry_point = self.build_cat_subgraph(subset, m=subset_m, m0=subset_m0, ef=ef)

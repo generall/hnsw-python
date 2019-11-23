@@ -21,27 +21,27 @@ if __name__ == "__main__":
     experiment.run_accuracy_test(
         'm0_8',
         experiment_param=8,
-        variable_params=list(range(50, 99)),
+        variable_params=list(range(1, 50)),
         attempts_per_value=100
     )
 
     experiment.run_accuracy_test(
         'm0_16',
         experiment_param=16,
-        variable_params=list(range(50, 99)),
+        variable_params=list(range(1, 50)),
         attempts_per_value=100
     )
 
     experiment.run_accuracy_test(
         'm0_24',
         experiment_param=24,
-        variable_params=list(range(50, 99)),
+        variable_params=list(range(1, 50)),
         attempts_per_value=100
     )
 
     experiment.run_accuracy_test(
         'm0_32',
         experiment_param=32,
-        variable_params=list(range(50, 99)),
+        variable_params=list(range(1, 50)),
         attempts_per_value=100
     )

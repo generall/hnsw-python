@@ -1,6 +1,6 @@
 from itertools import groupby
 from operator import itemgetter
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import numpy as np
 from tqdm import tqdm
@@ -34,7 +34,7 @@ class HNSWConsistentBuild(HNSWCat):
             else:
                 self._merge_layers(self._graphs[layer_idx], layer)
 
-    def add_batch(self, data: np.ndarray, categories: Dict[int, Any] = None, ef=None):
+    def add_batch(self, data: np.ndarray, categories: Dict[Any, List[int]] = None, ef=None):
         self.data = data
         for i in tqdm(range(self.data.shape[0])):
             self._enter_point = self._add(

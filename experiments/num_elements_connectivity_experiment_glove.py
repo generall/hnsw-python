@@ -1,5 +1,6 @@
 import os
 import pickle
+import random
 
 import numpy as np
 from gensim.models import KeyedVectors
@@ -13,9 +14,20 @@ from experiments.num_elements_connectivity_experiment import ConnectivityNumElem
 
 class ConnectivityGloveNumElementsExperiment(ConnectivityNumElementsExperiment):
 
-    def generate_data(self, param):
+    def __init__(self, experiment_name):
+        super().__init__(experiment_name)
         model = KeyedVectors.load_word2vec_format(os.path.join(DATA_PATH, 'glove_50k_50.txt'))
-        return model.vectors[:param]
+
+        self.glove_train = model.vectors[:40000]
+        self.glove_test = model.vectors[40000:]
+
+    def generate_data(self, param):
+        return self.glove_train[:param]
+
+    def get_random_vector(self):
+        num_test = self.glove_test.shape[0]
+        vect_id = random.randint(0, num_test - 1)
+        return self.glove_test[vect_id:vect_id + 1]
 
 
 if __name__ == "__main__":

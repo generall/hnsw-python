@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # initialize a new index, using a HNSW index on Cosine Similarity
     index = nmslib.init(method='hnsw', space='cosinesimil')
     index.addDataPointBatch(data)
-    index.createIndex({'post': 2}, print_progress=True)
+    index.createIndex({'post': 0}, print_progress=True)
 
     index.saveIndex('my_index.dat')
 

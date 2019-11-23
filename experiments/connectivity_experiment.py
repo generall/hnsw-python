@@ -14,7 +14,7 @@ class ConnectivityExperiment(BaseExperiment):
         super().__init__(experiment_name, num_elements=10000)
 
     def generate_index_class(self, param):
-        return HNSW('cosine', m0=param, ef=self.ef)
+        return HNSW('cosine', m=param, ef=self.ef)
 
     def load_index(self):
         with open(self.index_path, 'rb') as fr:

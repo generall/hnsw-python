@@ -1,6 +1,6 @@
 from itertools import groupby
 from operator import itemgetter
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Iterable
 
 import numpy as np
 from tqdm import tqdm
@@ -34,7 +34,31 @@ class HNSWConsistentBuild(HNSWCat):
             else:
                 self._merge_layers(self._graphs[layer_idx], layer)
 
-    def add_batch(self, data: np.ndarray, categories: Dict[Any, List[int]] = None, ef=None):
+    def build_cat_subgraph(self, points: Iterable[int], m, m0, ef):
+        graphs = []
+        entry_point = None
+
+        for idx in points:
+            entry_point = self._add(
+                idx,
+                data=self.data,
+                graphs=graphs,
+                entry_point=entry_point,
+                m=m,
+                m0=m0,
+                ef=ef
+            )
+        self._merge_graphs(graphs)
+
+        return graphs, entry_point
+
+    def add_batch(
+            self,
+            data: np.ndarray,
+            categories: Dict[Any, Iterable[int]] = None,
+            connected_subsets: Iterable[Iterable[int]] = None,
+            ef=None
+    ):
         self.data = data
         for i in tqdm(range(self.data.shape[0])):
             self._enter_point = self._add(
@@ -48,26 +72,9 @@ class HNSWConsistentBuild(HNSWCat):
             )
 
         if categories:
-            categories = groupby(sorted(categories.items(), key=itemgetter(1)), key=itemgetter(1))
             for category, points in tqdm(categories):
-
-                graphs = []
-                entry_point = None
-                m = self._cat_m
-                m0 = self._cat_m0
-                for idx in points:
-                    entry_point = self._add(
-                        idx,
-                        data=self.data,
-                        graphs=graphs,
-                        entry_point=entry_point,
-                        m=m,
-                        m0=m0,
-                        ef=ef
-                    )
+                graphs, entry_point = self.build_cat_subgraph(points, m=self._cat_m, m0=self._cat_m0, ef=ef)
 
                 self._category_enter_points[category] = (entry_point, len(graphs) - 1)
                 if len(graphs) > len(self._graphs):
                     self._enter_point = entry_point
-
-                self._merge_graphs(graphs)

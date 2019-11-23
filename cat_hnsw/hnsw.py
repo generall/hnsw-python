@@ -18,9 +18,18 @@ class HNSW(object):
     def l2_distance(self, a, b):
         return np.linalg.norm(a - b)
 
-    def cosine_distance(self, a, b):
+    @classmethod
+    def cosine_distance(cls, a, b):
+        """
+        >>> HNSW.cosine_distance([1,1], [-1, -1]) > 0
+        True
+
+        :param a:
+        :param b:
+        :return:
+        """
         try:
-            return np.dot(a, b) / (np.linalg.norm(a) * (np.linalg.norm(b)))
+            return 1 - np.dot(a, b) / (np.linalg.norm(a) * (np.linalg.norm(b)))
         except ValueError:
             print(a)
             print(b)

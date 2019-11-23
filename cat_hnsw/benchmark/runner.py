@@ -30,7 +30,7 @@ class BaseExperiment:
     def __init__(
             self,
             experiment_name,
-            m0=16,
+            m=16,
             ef=128,
             dim=50,
             num_elements=10000
@@ -38,7 +38,7 @@ class BaseExperiment:
         self.num_elements = num_elements
         self.dim = dim
         self.ef = ef
-        self.m0 = m0
+        self.m = m
         self.experiment_name = experiment_name
 
         self.experiment_dir = os.path.join(DATA_PATH, 'experiments', f'exp_{self.experiment_name}')
@@ -51,7 +51,7 @@ class BaseExperiment:
         return np.random.rand(self.num_elements, self.dim)
 
     def generate_index_class(self, param):
-        return HNSW('cosine', m0=self.m0, ef=self.ef)
+        return HNSW('cosine', m=self.m, ef=self.ef)
 
     def run_build(self,
                   param,
@@ -71,21 +71,27 @@ class BaseExperiment:
         runs, total_time = timeit.Timer(lambda: index.search(self.get_random_vector(), topn)).autorange()
         return total_time / runs
 
+    def search_closest(self, index, target, condition):
+        return index.search(target, 1, condition=condition)
+
     def test_accuracy(self, data, mask, index, attempts=10):
         found_top = []
+
+        if mask is None:
+            mask = np.ones(data.shape[0], dtype=bool)
 
         for _ in range(attempts):
             target = self.get_random_vector()
 
-            true_distance = cosine_similarity(target, data)
+            true_distance = 1 - cosine_similarity(target, data)
 
-            np.putmask(true_distance, ~mask, 1000_000)
+            np.putmask(true_distance, ~mask, 1_000_000)
 
             closest = list(np.argsort(true_distance))
 
             # closest_dist = true_distance[closest[:3]]
 
-            approx_closest = index.search(target, 1, condition=lambda point: mask[point])
+            approx_closest = self.search_closest(index, target=target, condition=lambda point: mask[point])
 
             approx_closest_idx, approx_closest_dist = approx_closest[0]
 

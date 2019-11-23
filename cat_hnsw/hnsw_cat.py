@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 from heapq import heapify, heappop, heappush, heapreplace, nlargest
+from itertools import islice
 from typing import Container, Callable
 
 from cat_hnsw.hnsw import HNSW
@@ -15,8 +16,9 @@ class HNSWCat(HNSW):
     Category-aware HNSW index
     """
 
-    def __init__(self, distance_type, m=5, ef=200, m0=None, heuristic=True, vectorized=False):
+    def __init__(self, distance_type, m=5, ef=200, m0=None, heuristic=True, vectorized=False, max_search_m=None):
         super().__init__(distance_type, m, ef, m0, heuristic, vectorized)
+        self.max_search_m = max_search_m or m
 
     def init_from_existing(self, other: HNSW):
         self.distance_func = other.distance_func
@@ -87,7 +89,8 @@ class HNSWCat(HNSW):
             dist, c = heappop(candidates)
             if dist > best_dist:
                 break
-            edges = [e for e in layer[c] if (e not in visited) and condition(e)]
+            edges = (e for e in layer[c] if (e not in visited) and condition(e))
+            edges = list(islice(edges, self.max_search_m))
             visited.update(edges)
             dists = vectorized_distance(q, [data[e] for e in edges])
             for e, dist in zip(edges, dists):
@@ -114,7 +117,8 @@ class HNSWCat(HNSW):
             if dist > -mref:
                 break
 
-            edges = [e for e in layer[c] if (e not in visited) and condition(e)]
+            edges = (e for e in layer[c] if (e not in visited) and condition(e))
+            edges = list(islice(edges, self.max_search_m))
             visited.update(edges)
             dists = vectorized_distance(q, [data[e] for e in edges])
             for e, dist in zip(edges, dists):

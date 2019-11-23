@@ -20,7 +20,7 @@ class ConnectivityExperiment(BaseExperiment):
         with open(self.index_path, 'rb') as fr:
             hnsw_n: HNSW = pickle.load(fr)
 
-        hnsw_n2 = HNSWCat('cosine').init_from_existing(hnsw_n, None)
+        hnsw_n2 = HNSWCat('cosine').init_from_existing(hnsw_n)
         return hnsw_n2
 
     def get_mask(self, index, experiment_param, variable_param):

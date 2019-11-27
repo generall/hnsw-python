@@ -18,7 +18,7 @@ class NMSLIBExperiment(ConnectivityExperimentGlove):
 if __name__ == '__main__':
     experiment = ConnectivityExperimentGlove("test")
 
-    experiment.run_build(param=16)
+    # experiment.run_build(param=16)
 
     index = experiment.load_index()
 

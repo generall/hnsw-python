@@ -53,12 +53,15 @@ class BaseExperiment:
     def generate_index_class(self, param):
         return HNSW('cosine', m=self.m, ef=self.ef)
 
+    def add_batch(self, index, data, param):
+        index.add_batch(data)
+
     def run_build(self,
                   param,
                   ):
         data = self.generate_data(param)
         index = self.generate_index_class(param)
-        index.add_batch(data)
+        self.add_batch(index, data, param)
 
         # save index
         with open(self.index_path, 'wb') as f:

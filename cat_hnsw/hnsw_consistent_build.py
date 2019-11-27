@@ -19,7 +19,7 @@ class HNSWConsistentBuild(HNSWCat):
 
     @classmethod
     def _merge_layers(cls, layer_to, layer_from):
-        for node, edges in layer_from:
+        for node, edges in layer_from.items():
             if node not in layer_to:
                 layer_to[node] = edges
             else:
@@ -77,7 +77,7 @@ class HNSWConsistentBuild(HNSWCat):
             cat_m = cat_m or self._m
             cat_m0 = cat_m0 or self._m0
 
-            for category, points in tqdm(categories):
+            for category, points in tqdm(categories.items()):
                 graphs, entry_point = self.build_cat_subgraph(points, m=cat_m, m0=cat_m0, ef=ef)
 
                 self._category_enter_points[category] = (entry_point, len(graphs) - 1)
@@ -90,3 +90,5 @@ class HNSWConsistentBuild(HNSWCat):
 
             for subset in connected_subsets:
                 graphs, entry_point = self.build_cat_subgraph(subset, m=subset_m, m0=subset_m0, ef=ef)
+                if len(graphs) > len(self._graphs):
+                    self._enter_point = entry_point

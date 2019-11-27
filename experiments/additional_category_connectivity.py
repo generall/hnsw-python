@@ -55,7 +55,8 @@ class CategorySizeConnectivityExperiment(BaseExperiment):
 if __name__ == "__main__":
     experiment = CategorySizeConnectivityExperiment(
         "categorical_connectivity_group_size",
-        num_elements=20000
+        m=8,
+        num_elements=10000
     )
 
     experiment.run_accuracy_test(
@@ -65,9 +66,9 @@ if __name__ == "__main__":
         attempts_per_value=500
     )
 
-    experiment.run_accuracy_test(
-        'group_50',
-        experiment_param=50,
-        variable_params=list(range(1, 10)),
-        attempts_per_value=500
-    )
+    # experiment.run_accuracy_test(
+    #     'group_50',
+    #     experiment_param=50,
+    #     variable_params=list(range(1, 10)),
+    #     attempts_per_value=500
+    # )

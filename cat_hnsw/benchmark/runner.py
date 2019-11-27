@@ -5,6 +5,7 @@ import timeit
 from typing import List
 
 import numpy as np
+import tqdm
 
 from cat_hnsw.hnsw import HNSW
 from cat_hnsw.settings import DATA_PATH
@@ -126,7 +127,7 @@ class BaseExperiment:
         index = self.load_index()
 
         with open(os.path.join(self.experiment_dir, iteration_name + '.jsonl'), 'w') as logs_out:
-            for variable_param in variable_params:
+            for variable_param in tqdm.tqdm(variable_params, desc="performing search"):
                 mask = self.get_mask(index, experiment_param, variable_param)
                 found_top = self.test_accuracy(index.data, mask=mask, index=index, attempts=attempts_per_value)
                 self.save_metrics(logs_out, found_top, experiment_param, variable_param)

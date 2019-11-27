@@ -41,8 +41,24 @@ class CategorySizeConnectivityExperiment(BaseExperiment):
         vect_id = random.randint(0, num_test - 1)
         return self.glove_test[vect_id:vect_id + 1]
 
+    @classmethod
+    def select_groups(cls, experiment_param, variable_param):
+        """
+
+        :param experiment_param:
+        :param variable_param:
+        :return:
+        """
+        selected_group = random.choice(range(experiment_param - variable_param))
+
+        selected_groups = []
+        for i in range(variable_param + 1):
+            selected_groups.append(selected_group + i)
+
+        return selected_groups
+
     def get_mask(self, index, experiment_param, variable_param):
-        selected_groups = random.sample(range(experiment_param), variable_param)
+        selected_groups = self.select_groups(experiment_param, variable_param)
 
         all_mask = np.zeros(index.data.shape[0], dtype=bool)
 

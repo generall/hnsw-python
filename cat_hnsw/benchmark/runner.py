@@ -108,6 +108,7 @@ class BaseExperiment:
             'experiment_param': experiment_param,
             'variable_param': variable_param,
             'precision@10': calc_precision_at(found_top, 10),
+            'average_position': np.mean(found_top)
         }))
         fd.write('\n')
         fd.flush()
@@ -122,12 +123,17 @@ class BaseExperiment:
         all_mask = np.ones(index.data.shape[0], dtype=bool)
         return all_mask
 
-    def run_accuracy_test(self, iteration_name, experiment_param, variable_params: list, attempts_per_value=100):
-        self.run_build(experiment_param)
-        index = self.load_index()
+    def run_accuracy_test(self, iteration_name, experiment_param, variable_params: list, attempts_per_value=100,
+                          index=None, mask_attempts=1):
+        if index is None:
+            self.run_build(experiment_param)
+            index = self.load_index()
 
         with open(os.path.join(self.experiment_dir, iteration_name + '.jsonl'), 'w') as logs_out:
             for variable_param in tqdm.tqdm(variable_params, desc="performing search"):
-                mask = self.get_mask(index, experiment_param, variable_param)
-                found_top = self.test_accuracy(index.data, mask=mask, index=index, attempts=attempts_per_value)
-                self.save_metrics(logs_out, found_top, experiment_param, variable_param)
+                found_top_all = []
+                for i in range(mask_attempts):
+                    mask = self.get_mask(index, experiment_param, variable_param)
+                    found_top = self.test_accuracy(index.data, mask=mask, index=index, attempts=attempts_per_value)
+                    found_top_all += found_top
+                self.save_metrics(logs_out, found_top_all, experiment_param, variable_param)

@@ -1,6 +1,8 @@
 .vscode
 .idea
 *.ind
+*.idx
+
 *.hdf5
 __pycache__
 bak

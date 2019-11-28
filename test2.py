@@ -14,12 +14,4 @@ if __name__ == '__main__':
     if index._enter_point not in index._graphs[-1]:
         index._enter_point = list(index._graphs[-1].keys())[0]
 
-    for i in range(50):
-        results = experiment.test_accuracy(
-            index.data,
-            mask=experiment.get_mask(index, 397, i),
-            index=index,
-            attempts=10
-        )
-
-        print(i / 397, results)
+    experiment.run_accuracy_test('random_group_count', 1000, list(range(1, 15)), 100, index=index, mask_attempts=70)

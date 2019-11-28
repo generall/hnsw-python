@@ -78,10 +78,11 @@ class HNSWConsistentBuild(HNSWCat):
             cat_m0 = cat_m0 or self._m0
 
             for category, points in tqdm(categories.items()):
+                num_layers = len(self._graphs)
                 graphs, entry_point = self.build_cat_subgraph(points, m=cat_m, m0=cat_m0, ef=ef)
 
                 self._category_enter_points[category] = (entry_point, len(graphs) - 1)
-                if len(graphs) > len(self._graphs):
+                if len(self._graphs) > num_layers:
                     self._enter_point = entry_point
 
         if connected_subsets is not None:
@@ -89,6 +90,7 @@ class HNSWConsistentBuild(HNSWCat):
             subset_m0 = subset_m0 or self._m0
 
             for subset in connected_subsets:
+                num_layers = len(self._graphs)
                 graphs, entry_point = self.build_cat_subgraph(subset, m=subset_m, m0=subset_m0, ef=ef)
-                if len(graphs) > len(self._graphs):
+                if len(self._graphs) > num_layers:
                     self._enter_point = entry_point

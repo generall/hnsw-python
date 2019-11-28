@@ -11,11 +11,15 @@ if __name__ == '__main__':
 
     index = experiment.load_index()
 
-    results = experiment.test_accuracy(
-        index.data,
-        mask=None,  # experiment.get_mask(index, 100, 2),
-        index=index,
-        attempts=10
-    )
+    if index._enter_point not in index._graphs[-1]:
+        index._enter_point = list(index._graphs[-1].keys())[0]
 
-    print(results)
+    for i in range(50):
+        results = experiment.test_accuracy(
+            index.data,
+            mask=experiment.get_mask(index, 397, i),
+            index=index,
+            attempts=10
+        )
+
+        print(i / 397, results)

@@ -72,12 +72,12 @@ if __name__ == "__main__":
     experiment = CategorySizeConnectivityExperiment(
         "categorical_connectivity_group_size",
         m=8,
-        num_elements=40000
+        num_elements=20000
     )
 
     experiment.run_accuracy_test(
         'group_100',
-        experiment_param=400,
+        experiment_param=1000,
         variable_params=list(range(1, 20)),
         attempts_per_value=100
     )
